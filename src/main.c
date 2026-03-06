@@ -8,14 +8,25 @@
 #include "../include/components.h"
 
 int main(int argc, char **argv) {
-    const char *WINDOW_TITLE = "Kool Kubez";
-    const Vector2i WINDOW_RESOLUTION = {800, 600};
+    const Vector2i WINDOW_RESOLUTION = {1280, 1024};
 
     bool gif_recording = false;
     MsfGifState gifState = {0};
     uint8_t *gif_pixels;
     char *gif_name;
     int width = WINDOW_RESOLUTION.x, height = WINDOW_RESOLUTION.y, centisecondsPerFrame = 2, quality = 16;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--gif") == 0) {
+            gif_recording = true;
+            msf_gif_begin(&gifState, width, height);
+            gif_pixels = malloc(width * height * 4);
+            gif_name = argv[i + 1];
+        }
+    }
+
+    const char *WINDOW_TITLE = gif_recording ? "Kool Kubez (Recording GIF)" : "Kool Kubez";
+
 
     Scene current_scene = initialize_scene();
 
@@ -32,18 +43,13 @@ int main(int argc, char **argv) {
     app_context.time_accumulator = 0;
 
     ORBIT = register_component(&current_scene, sizeof(OrbitComponent), "orbit", parse_orbit_component);
+    TUMBLE = register_component(&current_scene, sizeof(TumbleComponent), "tumble", parse_tumble_component);
     register_system(&current_scene, orbit_system, (1ULL << TRANSFORM) | (1ULL << ORBIT));
+    register_system(&current_scene, tumble_system, (1ULL << TRANSFORM) | (1ULL << TUMBLE));
+    register_system(&current_scene, test_camera_orbit_system, 0);
 
-    load_scene_from_file(&current_scene, "scenes/main_scene.json");
+    load_scene_from_file(&current_scene, "scenes/test_scene.json");
 
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--gif") == 0) {
-            gif_recording = true;
-            msf_gif_begin(&gifState, width, height);
-            gif_pixels = malloc(width * height * 4);
-            gif_name = argv[i + 1];
-        }
-    }
 
     while (app_context.application_running) {
         app_context.delta_time = get_delta_time(&ticks_now, &ticks_last);
@@ -58,9 +64,27 @@ int main(int argc, char **argv) {
             app_context.time_accumulator = 0;
         }
 
+        /**
         run_systems(&current_scene, app_context.delta_time);
         RenderList render_list = generate_render_list(&current_scene, &app_context);
         render(&app_context, &render_list);
+        */
+
+        Uint64 t0 = SDL_GetPerformanceCounter();
+        run_systems(&current_scene, app_context.delta_time);
+        Uint64 t1 = SDL_GetPerformanceCounter();
+        RenderList render_list = generate_render_list(&current_scene, &app_context);
+        Uint64 t2 = SDL_GetPerformanceCounter();
+        render(&app_context, &render_list);
+        Uint64 t3 = SDL_GetPerformanceCounter();
+
+        double freq = SDL_GetPerformanceFrequency();
+        static int frame = 0;
+        if (frame++ % 60 == 0) {
+            printf("systems: %.2fms  pipeline: %.2fms  render: %.2fms  tris: %d\n",
+                (t1-t0)/freq*1000, (t2-t1)/freq*1000, (t3-t2)/freq*1000,
+                render_list.triangle_count);
+        }
 
         if (gif_recording) {
             SDL_RenderReadPixels(app_context.renderer, NULL, SDL_PIXELFORMAT_RGBA32, gif_pixels, width * 4);
