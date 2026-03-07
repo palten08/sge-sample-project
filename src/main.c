@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <float.h>
 
 #define MSF_GIF_IMPL
 #include "../include/msf_gif.h"
@@ -37,6 +38,11 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    app_context.depth_buffer = malloc(sizeof(DepthBuffer));
+    app_context.depth_buffer->width = app_context.window_resolution.x;
+    app_context.depth_buffer->height = app_context.window_resolution.y;
+    app_context.depth_buffer->depth_values = malloc(WINDOW_RESOLUTION.x * WINDOW_RESOLUTION.y * sizeof(float));
+
     Uint64 ticks_now = SDL_GetPerformanceCounter();
     Uint64 ticks_last = 0;
     app_context.delta_time = 0;
@@ -69,6 +75,10 @@ int main(int argc, char **argv) {
         RenderList render_list = generate_render_list(&current_scene, &app_context);
         render(&app_context, &render_list);
         */
+
+        for (int i = 0; i < app_context.window_resolution.x * app_context.window_resolution.y; i++) {
+            app_context.depth_buffer->depth_values[i] = FLT_MAX; // Reset depth buffer values to maximum depth
+        }
 
         Uint64 t0 = SDL_GetPerformanceCounter();
         run_systems(&current_scene, app_context.delta_time);
