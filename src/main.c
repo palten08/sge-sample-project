@@ -7,6 +7,7 @@
 #include "shit-game-engine.h"
 #include "../include/systems.h"
 #include "../include/components.h"
+#include "../include/game_input_actions.h"
 
 int main(int argc, char **argv) {
     const Vector2i WINDOW_RESOLUTION = {1280, 1024};
@@ -54,6 +55,8 @@ int main(int argc, char **argv) {
     register_system(&current_scene, tumble_system, (1ULL << TRANSFORM) | (1ULL << TUMBLE));
     register_system(&current_scene, test_camera_orbit_system, 0);
 
+    register_game_input_actions(&app_context.input_action_map);
+
     load_scene_from_file(&current_scene, "scenes/test_scene.json");
 
 
@@ -62,7 +65,9 @@ int main(int argc, char **argv) {
 
         //double frame_rate = get_instantaneous_frame_rate(&ticks_now, &ticks_last);
 
-        handle_input(&app_context);
+        update_input_actions(&app_context.input_action_map, &app_context);
+
+        handle_sdl_events(&app_context);
 
         // To-do move this elsewhere later
         app_context.time_accumulator += app_context.delta_time;
@@ -81,7 +86,7 @@ int main(int argc, char **argv) {
         }
 
         Uint64 t0 = SDL_GetPerformanceCounter();
-        run_systems(&current_scene, app_context.delta_time);
+        run_systems(&current_scene, &app_context);
         Uint64 t1 = SDL_GetPerformanceCounter();
         RenderList render_list = generate_render_list(&current_scene, &app_context);
         Uint64 t2 = SDL_GetPerformanceCounter();
