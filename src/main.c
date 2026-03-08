@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 
     register_game_input_actions(&app_context.input_action_map);
 
-    load_scene_from_file(&current_scene, "scenes/test_scene.json");
+    load_scene_from_file(&current_scene, "scenes/main_scene.json");
 
 
     while (app_context.application_running) {

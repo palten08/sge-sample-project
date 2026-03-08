@@ -61,7 +61,7 @@ void test_camera_orbit_system(Scene *scene, AppContext *app_context) {
     float min_radius = 2.0f;
     float max_radius = 100.0f;
 
-    float orbit_speed = 1.0f;
+    static float orbit_speed = 0.0f;
 
     if (radius < 0) {
         float dx = scene->virtual_camera.position.x - scene->virtual_camera.look_target.x;
@@ -70,6 +70,9 @@ void test_camera_orbit_system(Scene *scene, AppContext *app_context) {
         height = scene->virtual_camera.position.y;
         camera_angle = atan2f(dx, dz);
     }
+
+    static float orbit_velocity = 0.0f;
+    float orbit_strength = 1.0f;
 
     int zoom_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_zoom");
     if (zoom_action_index < 0) return;
@@ -84,7 +87,10 @@ void test_camera_orbit_system(Scene *scene, AppContext *app_context) {
     int action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_orbit_horizontal");
     if (action_index < 0) return;
     float axis = get_input_action_axis_1d_value(&app_context->input_action_map.input_actions[action_index]);
-    camera_angle += axis * orbit_speed * app_context->delta_time;
+    orbit_velocity += axis * orbit_strength;
+
+    camera_angle += orbit_velocity * app_context->delta_time;
+    orbit_velocity *= powf(0.05f, app_context->delta_time);
 
     scene->virtual_camera.position.x = scene->virtual_camera.look_target.x + radius * sinf(camera_angle);
     scene->virtual_camera.position.z = scene->virtual_camera.look_target.z + radius * cosf(camera_angle);
