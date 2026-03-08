@@ -72,7 +72,7 @@ void test_camera_orbit_system(Scene *scene, AppContext *app_context) {
     }
 
     static float orbit_velocity = 0.0f;
-    float orbit_strength = 1.0f;
+    float orbit_strength = 0.02f;
 
     int zoom_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_zoom");
     if (zoom_action_index < 0) return;

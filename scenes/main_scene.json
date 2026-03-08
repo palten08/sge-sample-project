@@ -106,7 +106,7 @@
         "field_of_view": 60.0,
         "aspect_ratio": 1.25,
         "near_plane": 0.1,
-        "far_plane": 500.0
+        "far_plane": 50000.0
     },
     "entities": [
         {
@@ -22139,6 +22139,108 @@
                         "x": 1.4,
                         "y": -0.5,
                         "z": 0.0
+                    }
+                }
+            }
+        },
+        {
+            "id": 501,
+            "name": "Cube 501",
+            "components": {
+                "transform": {
+                    "position": {
+                        "x": -10000.0,
+                        "y": 0.0,
+                        "z": -30000.0
+                    },
+                    "rotation": {
+                        "x": -179.6,
+                        "y": -9.8,
+                        "z": -124.2
+                    },
+                    "scale": {
+                        "x": 8550.0,
+                        "y": 8550.0,
+                        "z": 8550.0
+                    }
+                },
+                "mesh": {
+                    "mesh_id": 0
+                },
+                "tumble": {
+                    "speed": 1.0,
+                    "direction": {
+                        "x": 0.05,
+                        "y": -0.05,
+                        "z": 0.0
+                    }
+                }
+            }
+        },
+        {
+            "id": 502,
+            "name": "Cube 502",
+            "components": {
+                "transform": {
+                    "position": {
+                        "x": 200.0,
+                        "y": 1.0,
+                        "z": -250.0
+                    },
+                    "rotation": {
+                        "x": -179.6,
+                        "y": -9.8,
+                        "z": -124.2
+                    },
+                    "scale": {
+                        "x": 18.0,
+                        "y": 18.0,
+                        "z": 18.0
+                    }
+                },
+                "mesh": {
+                    "mesh_id": 0
+                },
+                "tumble": {
+                    "speed": 1.0,
+                    "direction": {
+                        "x": 0.01,
+                        "y": 0.3,
+                        "z": 0.3
+                    }
+                }
+            }
+        },
+        {
+            "id": 503,
+            "name": "Cube 503",
+            "components": {
+                "transform": {
+                    "position": {
+                        "x": 600.0,
+                        "y": -1.0,
+                        "z": -60.0
+                    },
+                    "rotation": {
+                        "x": -179.6,
+                        "y": -9.8,
+                        "z": -124.2
+                    },
+                    "scale": {
+                        "x": 22.0,
+                        "y": 22.0,
+                        "z": 22.0
+                    }
+                },
+                "mesh": {
+                    "mesh_id": 0
+                },
+                "tumble": {
+                    "speed": 1.0,
+                    "direction": {
+                        "x": 0.07,
+                        "y": -0.8,
+                        "z": -0.7
                     }
                 }
             }
