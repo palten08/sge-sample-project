@@ -4,88 +4,20 @@
             {
                 "id": 0,
                 "name": "cube",
-                "vertices": [
-                    {
-                        "x": -1.0,
-                        "y": -1.0,
-                        "z": -1.0
-                    },
-                    {
-                        "x": 1.0,
-                        "y": -1.0,
-                        "z": -1.0
-                    },
-                    {
-                        "x": 1.0,
-                        "y": 1.0,
-                        "z": -1.0
-                    },
-                    {
-                        "x": -1.0,
-                        "y": 1.0,
-                        "z": -1.0
-                    },
-                    {
-                        "x": -1.0,
-                        "y": -1.0,
-                        "z": 1.0
-                    },
-                    {
-                        "x": 1.0,
-                        "y": -1.0,
-                        "z": 1.0
-                    },
-                    {
-                        "x": 1.0,
-                        "y": 1.0,
-                        "z": 1.0
-                    },
-                    {
-                        "x": -1.0,
-                        "y": 1.0,
-                        "z": 1.0
-                    }
-                ],
-                "indices": [
-                    0,
-                    2,
-                    1,
-                    0,
-                    3,
-                    2,
-                    4,
-                    5,
-                    6,
-                    6,
-                    7,
-                    4,
-                    0,
-                    1,
-                    5,
-                    5,
-                    4,
-                    0,
-                    2,
-                    3,
-                    7,
-                    7,
-                    6,
-                    2,
-                    0,
-                    7,
-                    3,
-                    0,
-                    4,
-                    7,
-                    1,
-                    2,
-                    6,
-                    6,
-                    5,
-                    1
-                ]
+                "file_path": "/home/pete/C Development/sge-test-project/assets/models/kube.obj"
+            },
+            {
+                "id": 1,
+                "name": "utah_teapot",
+                "file_path": "/home/pete/C Development/sge-test-project/assets/models/utah.obj"
             }
         ]
+    },
+    "directional_light": {
+        "direction": {"x": 1.0, "y": 1.0, "z": 1.0},
+        "color": {"r": 0.8, "g": 0.3, "b": 0.6},
+        "intensity": 0.75,
+        "ambient_intensity": 0.5
     },
     "camera": {
         "position": {
@@ -131,7 +63,7 @@
                     }
                 },
                 "mesh": {
-                    "mesh_id": 0
+                    "mesh_id": 1
                 },
                 "tumble": {
                     "speed": 1.0,
@@ -165,7 +97,7 @@
                     }
                 },
                 "mesh": {
-                    "mesh_id": 0
+                    "mesh_id": 1
                 },
                 "tumble": {
                     "speed": 1.0,
@@ -199,7 +131,7 @@
                     }
                 },
                 "mesh": {
-                    "mesh_id": 0
+                    "mesh_id": 1
                 },
                 "tumble": {
                     "speed": 1.0,
@@ -233,7 +165,7 @@
                     }
                 },
                 "mesh": {
-                    "mesh_id": 0
+                    "mesh_id": 1
                 },
                 "tumble": {
                     "speed": 1.0,

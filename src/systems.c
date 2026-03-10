@@ -102,3 +102,11 @@ void test_camera_orbit_system(Scene *scene, AppContext *app_context) {
         (Vector3f){0.0f, 1.0f, 0.0f}
     );
 }
+
+void test_light_movement_system(Scene *scene, AppContext *app_context) {
+    static float angle = 0.0f;
+    float speed = 0.6f; // Radians per second
+    angle += speed * app_context->delta_time;
+    scene->directional_light.direction.x = sinf(angle);
+    scene->directional_light.direction.z = cosf(angle);
+}

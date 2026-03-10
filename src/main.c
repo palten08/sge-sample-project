@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <float.h>
+#include <unistd.h>
 
 #define MSF_GIF_IMPL
 #include "../include/msf_gif.h"
@@ -16,7 +17,7 @@ int main(int argc, char **argv) {
     MsfGifState gifState = {0};
     uint8_t *gif_pixels;
     char *gif_name;
-    int width = WINDOW_RESOLUTION.x, height = WINDOW_RESOLUTION.y, centisecondsPerFrame = 2, quality = 16;
+    int width = WINDOW_RESOLUTION.x, height = WINDOW_RESOLUTION.y, centisecondsPerFrame = 10, quality = 16;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--gif") == 0) {
@@ -32,7 +33,7 @@ int main(int argc, char **argv) {
 
     Scene current_scene = initialize_scene();
 
-    AppContext app_context;
+    AppContext app_context = {0};
 
     if (initialize_sdl_components(&app_context, WINDOW_RESOLUTION, WINDOW_TITLE) != 0) {
         fprintf(stderr, "Error initializing SDL components\n");
@@ -40,9 +41,23 @@ int main(int argc, char **argv) {
     }
 
     app_context.depth_buffer = malloc(sizeof(DepthBuffer));
+    if (!app_context.depth_buffer) {
+        fprintf(stderr, "Failed to allocate memory for depth buffer\n");
+        return 1;
+    }
     app_context.depth_buffer->width = app_context.window_resolution.x;
     app_context.depth_buffer->height = app_context.window_resolution.y;
     app_context.depth_buffer->depth_values = malloc(WINDOW_RESOLUTION.x * WINDOW_RESOLUTION.y * sizeof(float));
+    if (!app_context.depth_buffer->depth_values) {
+        fprintf(stderr, "Failed to allocate memory for depth buffer values\n");
+        free(app_context.depth_buffer);
+        return 1;
+    }
+
+    int thread_count = sysconf(_SC_NPROCESSORS_ONLN) - 1;
+    if (thread_count < 1) thread_count = 1;
+    printf("Initializing thread pool with %d threads\n", thread_count);
+    create_app_thread_pool(&app_context, thread_count);
 
     Uint64 ticks_now = SDL_GetPerformanceCounter();
     Uint64 ticks_last = 0;
@@ -54,6 +69,7 @@ int main(int argc, char **argv) {
     register_system(&current_scene, orbit_system, (1ULL << TRANSFORM) | (1ULL << ORBIT));
     register_system(&current_scene, tumble_system, (1ULL << TRANSFORM) | (1ULL << TUMBLE));
     register_system(&current_scene, test_camera_orbit_system, 0);
+    register_system(&current_scene, test_light_movement_system, 0);
 
     register_game_input_actions(&app_context.input_action_map);
 
@@ -101,6 +117,7 @@ int main(int argc, char **argv) {
                 render_list.triangle_count);
         }
 
+        free(render_list.triangles);
         if (gif_recording) {
             SDL_RenderReadPixels(app_context.renderer, NULL, SDL_PIXELFORMAT_RGBA32, gif_pixels, width * 4);
             msf_gif_frame(&gifState, gif_pixels, centisecondsPerFrame, quality, width * 4);
@@ -118,6 +135,9 @@ int main(int argc, char **argv) {
         free(gif_pixels);
     }
 
+    destroy_thread_pool(&app_context.thread_pool);
+    free(app_context.depth_buffer->depth_values);
+    free(app_context.depth_buffer);
     cleanup_sdl_components(&app_context);
     return 0;
 }
