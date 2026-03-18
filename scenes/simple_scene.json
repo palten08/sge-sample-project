@@ -3,21 +3,25 @@
         "meshes": [
             {
                 "id": 0,
-                "name": "cube",
-                "file_path": "/home/pete/C Development/sge-test-project/assets/models/kube.obj"
-            },
+                "name": "kool_sphere",
+                "file_path": "/home/pete/C Development/sge-test-project/assets/models/kool_sphere/kool_sphere.obj",
+                "material_id": 0
+            }
+        ],
+        "materials": [
             {
-                "id": 1,
-                "name": "utah_teapot",
-                "file_path": "/home/pete/C Development/sge-test-project/assets/models/utah.obj"
+                "id": 0,
+                "name": "basicassmaterial",
+                "shading_model": "SHADING_PHONG",
+                "file_path": "/home/pete/C Development/sge-test-project/assets/models/kool_sphere/kool_sphere.mtl"
             }
         ]
     },
     "directional_light": {
         "direction": {"x": 1.0, "y": 1.0, "z": 1.0},
-        "color": {"r": 0.8, "g": 0.3, "b": 0.6},
-        "intensity": 0.75,
-        "ambient_intensity": 0.5
+        "color": {"r": 1.0, "g": 1.0, "b": 1.0},
+        "intensity": 1.0,
+        "ambient_intensity": 0.12
     },
     "camera": {
         "position": {
@@ -63,14 +67,14 @@
                     }
                 },
                 "mesh": {
-                    "mesh_id": 1
+                    "mesh_id": 0
                 },
                 "tumble": {
                     "speed": 1.0,
                     "direction": {
-                        "x": 0.0,
+                        "x": 1.0,
                         "y": 1.0,
-                        "z": 0.0
+                        "z": 0.2
                     }
                 }
             }
@@ -97,7 +101,7 @@
                     }
                 },
                 "mesh": {
-                    "mesh_id": 1
+                    "mesh_id": 0
                 },
                 "tumble": {
                     "speed": 1.0,
@@ -131,7 +135,7 @@
                     }
                 },
                 "mesh": {
-                    "mesh_id": 1
+                    "mesh_id": 0
                 },
                 "tumble": {
                     "speed": 1.0,
@@ -165,7 +169,7 @@
                     }
                 },
                 "mesh": {
-                    "mesh_id": 1
+                    "mesh_id": 0
                 },
                 "tumble": {
                     "speed": 1.0,

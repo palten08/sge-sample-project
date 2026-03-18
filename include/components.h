@@ -21,7 +21,7 @@ typedef struct {
 void parse_orbit_component(Scene *scene, Entity entity, int component_id, JSON_Object *json);
 
 typedef struct {
-    Vector3f direction; // 12 bytes
+    Vector3f direction; // 16 bytes
     float speed;    // 4 bytes
 } TumbleComponent;
 

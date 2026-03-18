@@ -3,13 +3,13 @@
         "meshes": [
             {
                 "id": 0,
-                "name": "utah_teapot",
-                "file_path": "/home/pete/C Development/sge-test-project/assets/models/utah.obj"
+                "name": "cube",
+                "file_path": "/home/pete/C Development/sge-test-project/assets/models/kube.obj"
             },
             {
                 "id": 1,
-                "name": "cube",
-                "file_path": "/home/pete/C Development/sge-test-project/assets/models/kube.obj"
+                "name": "utah_teapot",
+                "file_path": "/home/pete/C Development/sge-test-project/assets/models/utah.obj"
             }
         ]
     },

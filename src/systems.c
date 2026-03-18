@@ -1,6 +1,10 @@
+#include <SDL2/SDL.h>
+
 #include "../include/systems.h"
 #include "types.h"
 #include "matrix_operations.h"
+#include "quaternion_operations.h"
+#include "vector_operations.h"
 #include "ecs.h"
 #include "../include/components.h"
 #include "../include/input_actions.h"
@@ -14,7 +18,9 @@ void orbit_system(Scene *scene, AppContext *app_context) {
 
         // Orbit
         orbit_component->angle += orbit_component->speed * app_context->delta_time;
+        orbit_component->angle = fmodf(orbit_component->angle, 2.0f * M_PI);
         float angle = orbit_component->angle + orbit_component->phase;
+
         transform_component->position.x = orbit_component->center.x + orbit_component->radius * sin(angle);
         transform_component->position.z = orbit_component->center.z + orbit_component->radius * cos(angle);
 
@@ -36,18 +42,19 @@ void tumble_system(Scene *scene, AppContext *app_context) {
         TransformComponent *transform_component = get_component(scene, TRANSFORM, e);
         TumbleComponent *tumble_component = get_component(scene, TUMBLE, e);
 
-        transform_component->rotation.x += tumble_component->speed * app_context->delta_time * tumble_component->direction.x;
-        transform_component->rotation.y += tumble_component->speed * app_context->delta_time * tumble_component->direction.y;
-        transform_component->rotation.z += tumble_component->speed * app_context->delta_time * tumble_component->direction.z;
-
-        // Rebuild model matrix
+        // Replace with quaternion rotation
+        float angle = tumble_component->speed * app_context->delta_time;
+        Quaternion delta = quaternion_from_axis_angle(
+            tumble_component->direction.x,
+            tumble_component->direction.y,
+            tumble_component->direction.z,
+            angle
+        );
+        transform_component->rotation = quaternion_multiply(delta, transform_component->rotation);
+        Matrix4 rotation_matrix = quaternion_to_matrix4(transform_component->rotation);
         Matrix4 translation = mat4_create_translation_matrix(transform_component->position.x, transform_component->position.y, transform_component->position.z);
-        Matrix4 rx = mat4_create_rotation_x_matrix(transform_component->rotation.x);
-        Matrix4 ry = mat4_create_rotation_y_matrix(transform_component->rotation.y);
-        Matrix4 rz = mat4_create_rotation_z_matrix(transform_component->rotation.z);
-        Matrix4 rotation = mat4_multiply(rz, mat4_multiply(ry, rx));
         Matrix4 scale = mat4_create_scaling_matrix(transform_component->scale.x, transform_component->scale.y, transform_component->scale.z);
-        transform_component->model_matrix = mat4_multiply(translation, mat4_multiply(rotation, scale));
+        transform_component->model_matrix = mat4_multiply(translation, mat4_multiply(rotation_matrix, scale));
     }
 }
 
@@ -109,4 +116,48 @@ void test_light_movement_system(Scene *scene, AppContext *app_context) {
     angle += speed * app_context->delta_time;
     scene->directional_light.direction.x = sinf(angle);
     scene->directional_light.direction.z = cosf(angle);
+}
+
+void test_camera_freelook_system(Scene *scene, AppContext *app_context) {
+    static float yaw = 0.0f;
+    static float pitch = 0.0f;
+    static bool initialized = false;
+
+    if (!initialized) {
+        Vector3f dir = vec3f_normalize(vec3f_subtract(scene->virtual_camera.look_target, scene->virtual_camera.position));
+        yaw = atan2f(dir.x, dir.z);
+        pitch = asinf(fmaxf(-1.0f, fminf(dir.y, 1.0f)));
+        initialized = true;
+        return;
+    }
+
+    // Mouse look — only when right mouse button held
+    int mouse_dx, mouse_dy;
+    Uint32 buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
+    if (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
+        yaw -= mouse_dx * 0.003f;
+        pitch -= mouse_dy * 0.003f;
+        if (pitch > 1.4f) pitch = 1.4f;
+        if (pitch < -1.4f) pitch = -1.4f;
+    }
+
+    Vector3f forward = {
+        sinf(yaw) * cosf(pitch),
+        sinf(pitch),
+        cosf(yaw) * cosf(pitch)
+    };
+
+    float move_speed = 5.0f * fminf(app_context->delta_time, 0.1f);
+    const Uint8 *keys = SDL_GetKeyboardState(NULL);
+    if (keys[SDL_SCANCODE_W]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, vec3f_multiply_scalar(forward, move_speed));
+    if (keys[SDL_SCANCODE_S]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, vec3f_multiply_scalar(forward, -move_speed));
+
+    Vector3f right = vec3f_normalize(vec3f_cross_product(forward, (Vector3f){0.0f, 1.0f, 0.0f}));
+    if (keys[SDL_SCANCODE_D]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, vec3f_multiply_scalar(right, move_speed));
+    if (keys[SDL_SCANCODE_A]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, vec3f_multiply_scalar(right, -move_speed));
+    if (keys[SDL_SCANCODE_SPACE]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, (Vector3f){0, move_speed, 0});
+    if (keys[SDL_SCANCODE_LSHIFT]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, (Vector3f){0, -move_speed, 0});
+
+    scene->virtual_camera.look_target = vec3f_add(scene->virtual_camera.position, forward);
+    scene->virtual_camera.view_matrix = mat4_create_look_at_matrix(scene->virtual_camera.position, scene->virtual_camera.look_target, (Vector3f){0.0f, 1.0f, 0.0f});
 }
