@@ -123,8 +123,10 @@ void test_camera_freelook_system(Scene *scene, AppContext *app_context) {
     static float pitch = 0.0f;
     static bool initialized = false;
 
-    int horizontal_pan_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_pan_horizontal");
-    int vertical_pan_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_pan_vertical");
+    int horizontal_freelook_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_freelook_horizontal");
+    int vertical_freelook_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_freelook_vertical");
+    int move_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_move");
+    int freelook_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_freelook");
 
     if (!initialized) {
         Vector3f dir = vec3f_normalize(vec3f_subtract(scene->virtual_camera.look_target, scene->virtual_camera.position));
@@ -135,10 +137,9 @@ void test_camera_freelook_system(Scene *scene, AppContext *app_context) {
     }
 
     // Mouse look — only when right mouse button held
-    int freelook_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_freelook");
     if (is_input_action_held(&app_context->input_action_map.input_actions[freelook_action_index])) {
-        yaw -= get_input_action_axis_1d_value(&app_context->input_action_map.input_actions[horizontal_pan_action_index]) * 0.001f;
-        pitch -= get_input_action_axis_1d_value(&app_context->input_action_map.input_actions[vertical_pan_action_index]) * 0.001f;
+        yaw -= get_input_action_axis_1d_value(&app_context->input_action_map.input_actions[horizontal_freelook_action_index]) * 0.001f;
+        pitch -= get_input_action_axis_1d_value(&app_context->input_action_map.input_actions[vertical_freelook_action_index]) * 0.001f;
         if (pitch > 1.4f) pitch = 1.4f;
         if (pitch < -1.4f) pitch = -1.4f;
     }
@@ -150,15 +151,13 @@ void test_camera_freelook_system(Scene *scene, AppContext *app_context) {
     };
 
     float move_speed = 5.0f * fminf(app_context->delta_time, 0.1f);
-    const Uint8 *keys = SDL_GetKeyboardState(NULL);
-    if (keys[SDL_SCANCODE_W]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, vec3f_multiply_scalar(forward, move_speed));
-    if (keys[SDL_SCANCODE_S]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, vec3f_multiply_scalar(forward, -move_speed));
 
-    Vector3f right = vec3f_normalize(vec3f_cross_product(forward, (Vector3f){0.0f, 1.0f, 0.0f}));
-    if (keys[SDL_SCANCODE_D]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, vec3f_multiply_scalar(right, move_speed));
-    if (keys[SDL_SCANCODE_A]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, vec3f_multiply_scalar(right, -move_speed));
-    if (keys[SDL_SCANCODE_SPACE]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, (Vector3f){0, move_speed, 0});
-    if (keys[SDL_SCANCODE_LSHIFT]) scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, (Vector3f){0, -move_speed, 0});
+    if (is_input_action_held(&app_context->input_action_map.input_actions[move_action_index])) {
+        Vector2f move_direction = get_input_action_axis_2d_value(&app_context->input_action_map.input_actions[move_action_index]);
+        scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, vec3f_multiply_scalar(forward, move_direction.x * move_speed));
+        Vector3f right = vec3f_normalize(vec3f_cross_product(forward, (Vector3f){0.0f, 1.0f, 0.0f}));
+        scene->virtual_camera.position = vec3f_add(scene->virtual_camera.position, vec3f_multiply_scalar(right, move_direction.y * move_speed));
+    }
 
     scene->virtual_camera.look_target = vec3f_add(scene->virtual_camera.position, forward);
     scene->virtual_camera.view_matrix = mat4_create_look_at_matrix(scene->virtual_camera.position, scene->virtual_camera.look_target, (Vector3f){0.0f, 1.0f, 0.0f});
