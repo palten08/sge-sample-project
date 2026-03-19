@@ -123,6 +123,9 @@ void test_camera_freelook_system(Scene *scene, AppContext *app_context) {
     static float pitch = 0.0f;
     static bool initialized = false;
 
+    int horizontal_pan_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_pan_horizontal");
+    int vertical_pan_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_pan_vertical");
+
     if (!initialized) {
         Vector3f dir = vec3f_normalize(vec3f_subtract(scene->virtual_camera.look_target, scene->virtual_camera.position));
         yaw = atan2f(dir.x, dir.z);
@@ -132,11 +135,10 @@ void test_camera_freelook_system(Scene *scene, AppContext *app_context) {
     }
 
     // Mouse look — only when right mouse button held
-    int mouse_dx, mouse_dy;
-    Uint32 buttons = SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
-    if (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
-        yaw -= mouse_dx * 0.003f;
-        pitch -= mouse_dy * 0.003f;
+    int freelook_action_index = get_input_action_index_by_name(&app_context->input_action_map, "camera_freelook");
+    if (is_input_action_held(&app_context->input_action_map.input_actions[freelook_action_index])) {
+        yaw -= get_input_action_axis_1d_value(&app_context->input_action_map.input_actions[horizontal_pan_action_index]) * 0.001f;
+        pitch -= get_input_action_axis_1d_value(&app_context->input_action_map.input_actions[vertical_pan_action_index]) * 0.001f;
         if (pitch > 1.4f) pitch = 1.4f;
         if (pitch < -1.4f) pitch = -1.4f;
     }

@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     register_system(&game_scene, tumble_system, (1ULL << TRANSFORM) | (1ULL << TUMBLE));
     register_system(&game_scene, test_camera_freelook_system, 0);
     //register_system(&game_scene, test_camera_orbit_system, 0);
-    register_system(&game_scene, test_light_movement_system, 0);
+    //register_system(&game_scene, test_light_movement_system, 0);
 
     register_game_input_actions(&app.input_action_map);
 
