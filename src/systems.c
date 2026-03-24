@@ -1,4 +1,5 @@
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
+#include <math.h>
 
 #include "../include/systems.h"
 #include "types.h"
