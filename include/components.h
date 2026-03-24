@@ -18,11 +18,11 @@ typedef struct {
     float angle; // 4 bytes
 } OrbitComponent;
 
-void parse_orbit_component(Scene *scene, Entity entity, int component_id, JSON_Object *json);
+void parse_orbit_component(Scene *scene, Entity entity, int component_id, void *data);
 
 typedef struct {
     Vector3f direction; // 16 bytes
     float speed;    // 4 bytes
 } TumbleComponent;
 
-void parse_tumble_component(Scene *scene, Entity entity, int component_id, JSON_Object *json);
+void parse_tumble_component(Scene *scene, Entity entity, int component_id, void *data);

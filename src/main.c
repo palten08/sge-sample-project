@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
 
     ORBIT = register_component(&game_scene, sizeof(OrbitComponent), "orbit", parse_orbit_component);
     TUMBLE = register_component(&game_scene, sizeof(TumbleComponent), "tumble", parse_tumble_component);
-    engine_load_scene(&game_scene, "scenes/zaychyka.json");
+    engine_load_scene(&game_scene, "scenes/bin_test.sge");
     register_system(&game_scene, orbit_system, (1ULL << TRANSFORM) | (1ULL << ORBIT));
     register_system(&game_scene, tumble_system, (1ULL << TRANSFORM) | (1ULL << TUMBLE));
     register_system(&game_scene, test_camera_freelook_system, 0);
