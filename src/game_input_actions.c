@@ -21,4 +21,10 @@ void register_game_input_actions(InputActionMap *map) {
     InputBinding right_mouse_button[] = {{INPUT_MOUSE_BUTTON, SDL_BUTTON_RIGHT}};
     register_button_input_action(map, "camera_freelook", right_mouse_button, 1);
 
+
+    InputBinding debug_add_component_binding[] = {{INPUT_KEYBOARD, SDL_SCANCODE_R}};
+    register_button_input_action(map, "debug_add_component", debug_add_component_binding, 1);
+
+    InputBinding debug_destroy_entity_binding[] = {{INPUT_KEYBOARD, SDL_SCANCODE_T}};
+    register_button_input_action(map, "debug_destroy_entity", debug_destroy_entity_binding, 1);
 }

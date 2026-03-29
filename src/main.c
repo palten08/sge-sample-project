@@ -33,10 +33,12 @@ int main(int argc, char **argv) {
     register_system(&game_scene, orbit_system, (1ULL << TRANSFORM) | (1ULL << ORBIT));
     register_system(&game_scene, tumble_system, (1ULL << TRANSFORM) | (1ULL << TUMBLE));
     register_system(&game_scene, test_camera_freelook_system, 0);
-    //register_system(&game_scene, test_camera_orbit_system, 0);
-    //register_system(&game_scene, test_light_movement_system, 0);
+    register_system(&game_scene, test_add_tumble_to_entity_system, 0);
+    register_system(&game_scene, test_entity_system, 0);
 
     register_game_input_actions(&app.input_action_map);
+
+    print_stack_usage();
 
     while (app.application_running) {
         engine_frame_start(&app);
@@ -44,5 +46,5 @@ int main(int argc, char **argv) {
         engine_frame_end(&app);
     }
 
-    engine_shutdown(&app);
+    engine_shutdown(&app, &game_scene);
 }

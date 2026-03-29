@@ -1,5 +1,6 @@
 #include <SDL3/SDL.h>
 #include <math.h>
+#include <stdlib.h>
 
 #include "../include/systems.h"
 #include "types.h"
@@ -11,52 +12,59 @@
 #include "../include/input_actions.h"
 
 void orbit_system(Scene *scene, AppContext *app_context) {
-    uint64_t required = (1ULL << TRANSFORM) | (1ULL << ORBIT);
-    for (int e = 0; e < scene->registered_entity_count; e++) {
-        if ((scene->component_masks[e] & required) != required) continue;
-        TransformComponent *transform_component = get_component(scene, TRANSFORM, e);
-        OrbitComponent *orbit_component = get_component(scene, ORBIT, e);
-
-        // Orbit
-        orbit_component->angle += orbit_component->speed * app_context->delta_time;
-        orbit_component->angle = fmodf(orbit_component->angle, 2.0f * M_PI);
-        float angle = orbit_component->angle + orbit_component->phase;
-
-        transform_component->position.x = orbit_component->center.x + orbit_component->radius * sin(angle);
-        transform_component->position.z = orbit_component->center.z + orbit_component->radius * cos(angle);
-
-        // Rebuild model matrix
-        Matrix4 translation = mat4_create_translation_matrix(transform_component->position.x, transform_component->position.y, transform_component->position.z);
-        Matrix4 rx = mat4_create_rotation_x_matrix(transform_component->rotation.x);
-        Matrix4 ry = mat4_create_rotation_y_matrix(transform_component->rotation.y);
-        Matrix4 rz = mat4_create_rotation_z_matrix(transform_component->rotation.z);
-        Matrix4 rotation = mat4_multiply(rz, mat4_multiply(ry, rx));
-        Matrix4 scale = mat4_create_scaling_matrix(transform_component->scale.x, transform_component->scale.y, transform_component->scale.z);
-        transform_component->model_matrix = mat4_multiply(translation, mat4_multiply(rotation, scale));
+    uint64_t required_bitmask = (1ULL << TRANSFORM) | (1ULL << ORBIT);
+    MatchedArchetypes matched_archetypes = find_matching_archetypes(scene, required_bitmask);
+    if (matched_archetypes.archetype_count == 0) {
+        //LOG_DEBUG("No archetypes matched for orbit system");
+        free(matched_archetypes.archetypes);
+        return;
     }
+    for (int i = 0; i < matched_archetypes.archetype_count; i++) {
+        TransformComponent *transform_column = get_archetype_column_pointer(matched_archetypes.archetypes[i], TRANSFORM);
+        OrbitComponent *orbit_column = get_archetype_column_pointer(matched_archetypes.archetypes[i], ORBIT);
+        for (int row = 0; row < matched_archetypes.archetypes[i]->row_count; row++) {
+            // Orbit
+            orbit_column[row].angle += orbit_column[row].speed * app_context->delta_time;
+            orbit_column[row].angle = fmodf(orbit_column[row].angle, 2.0f * M_PI);
+            float angle = orbit_column[row].angle + orbit_column[row].phase;
+
+            transform_column[row].position.x = orbit_column[row].center.x + orbit_column[row].radius * sinf(angle);
+            transform_column[row].position.z = orbit_column[row].center.z + orbit_column[row].radius * cosf(angle);
+
+            // Rebuild model matrix
+            Matrix4 translation = mat4_create_translation_matrix(transform_column[row].position.x, transform_column[row].position.y, transform_column[row].position.z);
+            Matrix4 rotation = quaternion_to_matrix4(transform_column[row].rotation);
+            Matrix4 scale = mat4_create_scaling_matrix(transform_column[row].scale.x, transform_column[row].scale.y, transform_column[row].scale.z);
+            transform_column[row].model_matrix = mat4_multiply(translation, mat4_multiply(rotation, scale));
+        }
+    }
+    free(matched_archetypes.archetypes);
 }
 
 void tumble_system(Scene *scene, AppContext *app_context) {
-    uint64_t required = (1ULL << TRANSFORM) | (1ULL << TUMBLE);
-    for (int e = 0; e < scene->registered_entity_count; e++) {
-        if ((scene->component_masks[e] & required) != required) continue;
-        TransformComponent *transform_component = get_component(scene, TRANSFORM, e);
-        TumbleComponent *tumble_component = get_component(scene, TUMBLE, e);
-
-        // Replace with quaternion rotation
-        float angle = tumble_component->speed * app_context->delta_time;
-        Quaternion delta = quaternion_from_axis_angle(
-            tumble_component->direction.x,
-            tumble_component->direction.y,
-            tumble_component->direction.z,
-            angle
-        );
-        transform_component->rotation = quaternion_multiply(delta, transform_component->rotation);
-        Matrix4 rotation_matrix = quaternion_to_matrix4(transform_component->rotation);
-        Matrix4 translation = mat4_create_translation_matrix(transform_component->position.x, transform_component->position.y, transform_component->position.z);
-        Matrix4 scale = mat4_create_scaling_matrix(transform_component->scale.x, transform_component->scale.y, transform_component->scale.z);
-        transform_component->model_matrix = mat4_multiply(translation, mat4_multiply(rotation_matrix, scale));
+    uint64_t required_bitmask = (1ULL << TRANSFORM) | (1ULL << TUMBLE);
+    MatchedArchetypes matched_archetypes = find_matching_archetypes(scene, required_bitmask);
+    if (matched_archetypes.archetype_count == 0) {
+        LOG_DEBUG("No archetypes matched for tumble system");
+        free(matched_archetypes.archetypes);
+        return;
     }
+    for (int i = 0; i < matched_archetypes.archetype_count; i++) {
+        TransformComponent *transform_column = get_archetype_column_pointer(matched_archetypes.archetypes[i], TRANSFORM);
+        TumbleComponent *tumble_column = get_archetype_column_pointer(matched_archetypes.archetypes[i], TUMBLE);
+        for (int row = 0; row < matched_archetypes.archetypes[i]->row_count; row++) {
+            // Tumble
+            float angle = tumble_column[row].speed * app_context->delta_time;
+            Quaternion delta = quaternion_from_axis_angle(tumble_column[row].direction.x, tumble_column[row].direction.y, tumble_column[row].direction.z, angle);
+            transform_column[row].rotation = quaternion_multiply(delta, transform_column[row].rotation);
+
+            Matrix4 rotation_matrix = quaternion_to_matrix4(transform_column[row].rotation);
+            Matrix4 translation_matrix = mat4_create_translation_matrix(transform_column[row].position.x, transform_column[row].position.y, transform_column[row].position.z);
+            Matrix4 scale_matrix = mat4_create_scaling_matrix(transform_column[row].scale.x, transform_column[row].scale.y, transform_column[row].scale.z);
+            transform_column[row].model_matrix = mat4_multiply(translation_matrix, mat4_multiply(rotation_matrix, scale_matrix));
+        }
+    }
+    free(matched_archetypes.archetypes);
 }
 
 void test_camera_orbit_system(Scene *scene, AppContext *app_context) {
@@ -163,3 +171,65 @@ void test_camera_freelook_system(Scene *scene, AppContext *app_context) {
     scene->virtual_camera.look_target = vec3f_add(scene->virtual_camera.position, forward);
     scene->virtual_camera.view_matrix = mat4_create_look_at_matrix(scene->virtual_camera.position, scene->virtual_camera.look_target, (Vector3f){0.0f, 1.0f, 0.0f});
 }
+
+void test_get_entity_record_system(Scene *scene, AppContext *app_context) {
+    int debug_entity_record_action_index = get_input_action_index_by_name(&app_context->input_action_map, "debug_entity_record");
+    if (debug_entity_record_action_index < 0) return;
+    if (is_input_action_pressed(&app_context->input_action_map.input_actions[debug_entity_record_action_index])) {
+        EntityRecord record = get_entity_record(scene, 0); // Assuming entity 0 exists
+        LOG_DEBUG("EntityRecord for entity 0: archetype_index=%d, archetype_row_index=%d", record.archetype_index, record.archetype_row_index);
+    }
+}
+
+void test_add_tumble_to_entity_system(Scene *scene, AppContext *app_context) {
+    int add_component_action_index = get_input_action_index_by_name(&app_context->input_action_map, "debug_add_component");
+    if (add_component_action_index < 0) return;
+    if (is_input_action_pressed(&app_context->input_action_map.input_actions[add_component_action_index])) {
+        int torus_entity_id = get_entity_id_by_name(scene, "archetyped_torus");
+        if (get_component(scene, TUMBLE, torus_entity_id) != NULL) {
+            LOG_DEBUG("Entity 'archetyped_torus' already has a tumble component");
+            remove_component_from_entity(scene, torus_entity_id, TUMBLE);
+            return;
+        } else {
+            LOG_DEBUG("Adding tumble component to entity 'archetyped_torus'");
+            TumbleComponent tumble = {0};
+            tumble.direction = (Vector3f){1.0f, 1.0f, 0.0f};
+            tumble.speed = 2.0f;
+            add_component(scene, torus_entity_id, TUMBLE, &tumble);
+        }
+    }
+}
+
+void test_entity_system(Scene *scene, AppContext *app_context) {
+    int destroy_entity_action_index = get_input_action_index_by_name(&app_context->input_action_map, "debug_destroy_entity");
+    if (destroy_entity_action_index < 0) return;
+    if (is_input_action_pressed(&app_context->input_action_map.input_actions[destroy_entity_action_index])) {
+        int torus_entity_id = get_entity_id_by_name(scene, "archetyped_torus");
+        if (torus_entity_id < 0) {
+            // Try to add the Torus back with all the components it had originally to test archetype assignment on creation as well
+            LOG_DEBUG("Entity 'archetyped_torus' not found, creating it again");
+            int new_entity_id = register_entity(scene, "archetyped_torus");
+            TransformComponent transform = {0};
+            transform.position = (Vector3f){3.3f, 0.0f, 1.3f};
+            transform.rotation = (Quaternion){0.0f, 0.0f, 0.0f, 1.0f};
+            transform.scale = (Vector3f){1.0f, 1.0f, 1.0f};
+            add_component(scene, new_entity_id, TRANSFORM, &transform);
+            TumbleComponent tumble = {0};
+            tumble.direction = (Vector3f){2.0f, 1.0f, 5.0f};
+            tumble.speed = 1.0f;
+            add_component(scene, new_entity_id, TUMBLE, &tumble);
+            MeshComponent mesh = {0};
+            int torus_mesh_id = get_mesh_id_by_name(scene, "Torus");
+            if (torus_mesh_id < 0) {
+                LOG_ERROR("Torus mesh not found in asset library, cannot add MeshComponent to 'archetyped_torus' entity");
+                return;
+            }
+            LOG_DEBUG("Found Torus mesh with ID %d, adding MeshComponent to 'archetyped_torus' entity", torus_mesh_id);
+            mesh.mesh_id = torus_mesh_id;
+            add_component(scene, new_entity_id, MESH, &mesh);
+        } else {
+            LOG_DEBUG("Destroying entity 'archetyped_torus' with ID %d", torus_entity_id);
+            destroy_entity(scene, torus_entity_id);
+        }
+    }
+} 
